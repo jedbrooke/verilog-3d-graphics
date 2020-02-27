@@ -19,7 +19,7 @@ for i in range(mat1[0]):
             alsb = (i*mat1[0] + k) * bit_width
             bmsb = (k*mat2[0] + j + 1) * bit_width - 1
             blsb = (k*mat2[0] + j) * bit_width
-            sums.append("(A[{}:{}] * B[{}:{}])".format(amsb,alsb,bmsb,blsb))
+            sums.append("8'b (A[{}:{}] * B[{}:{}])".format(amsb,alsb,bmsb,blsb))
         assignments.append(" + ".join(sums))
 print("assign M = {"," , ".join(assignments),"};",sep="")
 
