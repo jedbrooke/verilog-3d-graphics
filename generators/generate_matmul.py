@@ -9,20 +9,22 @@ if mat1[1] != mat2[0]:
     print("Error: Matrix size mismatch")
     sys.exit(1)
 
-size_1d = (mat1[0] * mat2[1] * bit_width  - 1)
+m_size_1d = (mat1[0] * mat2[1] * bit_width  - 1)
+mat1_size_1d = (mat1[0] * mat1[1] * bit_width  - 1)
+mat2_size_1d = (mat2[0] * mat2[1] * bit_width - 1)
 assignments = []
 
 for i in range(mat1[0]):
     for j in range(mat2[1]):
         sums = []
         for k in range(mat1[1]):
-            amsb = (i*mat1[0] + k + 1) * bit_width - 1
-            alsb = (i*mat1[0] + k) * bit_width
-            bmsb = (k*mat2[0] + j + 1) * bit_width - 1
-            blsb = (k*mat2[0] + j) * bit_width
+            alsb = mat1_size_1d - ((i*mat1[0] + k + 1) * bit_width - 1)
+            amsb = mat1_size_1d - ((i*mat1[0] + k) * bit_width)
+            blsb = mat2_size_1d - ((k*mat2[0] + j + 1) * bit_width - 1)
+            bmsb = mat2_size_1d - ((k*mat2[0] + j) * bit_width)
             sums.append("(A[{}:{}] * B[{}:{}])".format(amsb,alsb,bmsb,blsb))
-        mlsb = size_1d - ((i*mat1[0] + j + 1) * bit_width - 1)
-        mmsb = size_1d - (i*mat1[0] + j) * bit_width
+        mlsb = m_size_1d - ((i*mat1[0] + j + 1) * bit_width - 1)
+        mmsb = m_size_1d - (i*mat1[0] + j) * bit_width
         assignments.append("assign M[{}:{}] = ".format(mmsb,mlsb) + " + ".join(sums) + ";")
 
 print(*assignments,sep="\n")
