@@ -1,13 +1,11 @@
+
 //Module for Calculating M = A*B
 //A is a 4x4 matrix, B is a 4x4 matrix, M is a 4x4 matrix
 module matmul_4x4by4x4(A,B,M);
 	//input and outputs
-	//A is 127 bits, for 4*4=16 elements, each of which is 8 bits wide
-	input wire [127:0] A;
-	//B is 127 bits, for 4*4=16 elements, each of which is 8 bits wide
-	input wire [127:0] B;
-	//M is 127 bits, for 4*4=16 elements, each of which is 8 bits wide
-	output wire [127:0] B;
+	input wire [127:0] A;	//A is 128 bits, for 4*4=16 elements, each of which is 8 bits wide
+	input wire [127:0] B;	//B is 128 bits, for 4*4=16 elements, each of which is 8 bits wide
+	output wire [127:0] B;	//M is 128 bits, for 4*4=16 elements, each of which is 8 bits wide
 	assign M[127:120] = (A[127:120] * B[127:120]) + (A[119:112] * B[95:88]) + (A[111:104] * B[63:56]) + (A[103:96] * B[31:24]);
 	assign M[119:112] = (A[127:120] * B[119:112]) + (A[119:112] * B[87:80]) + (A[111:104] * B[55:48]) + (A[103:96] * B[23:16]);
 	assign M[111:104] = (A[127:120] * B[111:104]) + (A[119:112] * B[79:72]) + (A[111:104] * B[47:40]) + (A[103:96] * B[15:8]);
@@ -24,4 +22,6 @@ module matmul_4x4by4x4(A,B,M);
 	assign M[23:16] = (A[31:24] * B[119:112]) + (A[23:16] * B[87:80]) + (A[15:8] * B[55:48]) + (A[7:0] * B[23:16]);
 	assign M[15:8] = (A[31:24] * B[111:104]) + (A[23:16] * B[79:72]) + (A[15:8] * B[47:40]) + (A[7:0] * B[15:8]);
 	assign M[7:0] = (A[31:24] * B[103:96]) + (A[23:16] * B[71:64]) + (A[15:8] * B[39:32]) + (A[7:0] * B[7:0]);
+
 endmodule
+
