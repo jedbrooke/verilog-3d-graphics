@@ -9,28 +9,16 @@ if "-f" in sys.argv:
     fp = True
 
 if mat1[1] != mat2[0]:
-    print("Error: Matrix size mismatch")
+    print("Error: Matrix size mismatch",file=sys.stderr)
     sys.exit(1)
 
-name = "matmul_{}by{}".format(size1,size2)
-print("//Module for Calculating M = A*B")
-print("//A is a {} matrix, B is a {} matrix, M is a {} matrix".format(size1,size2,"{}x{}".format(mat1[0],mat2[1])))
-print("module {}(A,B,M);".format(name))
-print("\t//input and outputs")
+'''
+generate core multiplication
+'''
+assignments = []
 m_size_1d = (mat1[0] * mat2[1] * bit_width  - 1)
 mat1_size_1d = (mat1[0] * mat1[1] * bit_width  - 1)
 mat2_size_1d = (mat2[0] * mat2[1] * bit_width - 1)
-print("\t//A is {} bits, for {}*{}={} elements, each of which is {} bits wide".format(mat1_size_1d,mat1[0],mat1[1],mat1[0]*mat1[1],bit_width))
-print("\tinput wire [{}:0] A;".format(mat1_size_1d))
-print("\t//B is {} bits, for {}*{}={} elements, each of which is {} bits wide".format(mat2_size_1d,mat2[0],mat2[1],mat2[0]*mat2[1],bit_width))
-print("\tinput wire [{}:0] B;".format(mat2_size_1d))
-print("\t//M is {} bits, for {}*{}={} elements, each of which is {} bits wide".format(m_size_1d,mat1[0],mat2[1],mat1[0]*mat2[1],bit_width))
-print("\toutput wire [{}:0] B;".format(m_size_1d))
-
-
-
-
-assignments = []
 
 for i in range(mat1[0]):
     for j in range(mat2[1]):
@@ -40,15 +28,34 @@ for i in range(mat1[0]):
             amsb = mat1_size_1d - ((i*mat1[0] + k) * bit_width)
             blsb = mat2_size_1d - ((k*mat2[0] + j + 1) * bit_width - 1)
             bmsb = mat2_size_1d - ((k*mat2[0] + j) * bit_width)
-            sums.append("(A[{}:{}] * B[{}:{}])".format(amsb,alsb,bmsb,blsb))
+            if fp:
+                sums.append("(A[{}:{}] * B[{}:{}])")
+            else:
+                sums.append(f"(A[{amsb}:{alsb}] * B[{bmsb}:{blsb}])")
         mlsb = m_size_1d - ((i*mat1[0] + j + 1) * bit_width - 1)
         mmsb = m_size_1d - (i*mat1[0] + j) * bit_width
-        assignments.append("\tassign M[{}:{}] = ".format(mmsb,mlsb) + " + ".join(sums) + ";")
-print(*assignments,sep="\n")
-print("endmodule")
-
-
+        sums = " + ".join(sums)
+        assignments.append(f"\tassign M[{mmsb}:{mlsb}] = {sums};\n")
+assignments = "".join(assignments)
+'''
+print to file
+'''
+'''
+print model and register definitions
+'''
+name = "matmul_{}by{}".format(size1,size2)
+print(f'''
+//Module for Calculating M = A*B
+//A is a {size1} matrix, B is a {size2} matrix, M is a {mat1[0]}x{mat2[1]} matrix
+module {name}(A,B,M);
+\t//input and outputs
+\tinput wire [{mat1_size_1d}:0] A;\t//A is {mat1_size_1d+1} bits, for {mat1[0]}*{mat1[1]}={mat1[0]*mat1[1]} elements, each of which is {bit_width} bits wide
+\tinput wire [{mat2_size_1d}:0] B;\t//B is {mat2_size_1d+1} bits, for {mat2[0]}*{mat2[1]}={mat2[0]*mat2[1]} elements, each of which is {bit_width} bits wide
+\toutput wire [{m_size_1d}:0] B;\t//M is {m_size_1d+1} bits, for {mat1[0]}*{mat2[1]}={mat1[0]*mat2[1]} elements, each of which is {bit_width} bits wide
+{assignments}
+endmodule
+''')
 
 
 def print_usage():
-    print("Usage: python3 generate matmul N1xN2 N2xN3 bit_width")
+    print("Usage: python3 generate_matmul.py N1xN2 N2xN3 bit_width (-f QI.F)")
