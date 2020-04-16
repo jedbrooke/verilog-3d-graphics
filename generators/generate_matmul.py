@@ -5,8 +5,14 @@ bit_width = int(sys.argv[3])
 mat1 = [int(s) for s in size1.split('x')]
 mat2 = [int(s) for s in size2.split('x')]
 fp = False
+qnum = []
 if "-f" in sys.argv:
     fp = True
+if fp:
+    qnum = [int(s) for s in sys.argv[5][1:].split('.')]
+    if (qnum[0] + qnum[1]) != bit_width:
+        print("Error: Qnotation does not match bit width",file=sys.stderr)
+        sys.exit(1)
 
 if mat1[1] != mat2[0]:
     print("Error: Matrix size mismatch",file=sys.stderr)
