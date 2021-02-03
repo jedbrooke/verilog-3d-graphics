@@ -1,2 +1,5 @@
 
 .DS_Store
+ray_test
+__pycache__
+.vscode
