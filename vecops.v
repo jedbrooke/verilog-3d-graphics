@@ -9,9 +9,9 @@ module vectorCrossProduct #(parameter WIDTH=32) (
     input [WIDTH-1:0] a1,a2,a3,b1,b2,b3;
     output [WIDTH-1:0] c1,c2,c3;
 
-    assign c1 = (a2*b3) - (a3*b2)
-    assign c2 = (a3*b1) - (a1*b3)
-    assign c3 = (a1*b2) - (a2*b1)
+    assign c1 = (a2*b3) - (a3*b2);
+    assign c2 = (a3*b1) - (a1*b3);
+    assign c3 = (a1*b2) - (a2*b1);
     
 endmodule
 
@@ -61,7 +61,7 @@ module vectorDotProduct #(parameter WIDTH=32) (
     input [WIDTH-1:0] a1,a2,a3,b1,b2,b3;
     output [WIDTH-1:0] p;
 
-    assign p = (a1 * b1) + (a2 * b2) + (a3 * b3)
+    assign p = (a1 * b1) + (a2 * b2) + (a3 * b3);
 
 endmodule
 
@@ -140,7 +140,7 @@ module rayTriIntersect #(parameter WIDTH=32) (
     // u = f * s.dotProduct(h);
     wire [WIDTH-1:0] u_int;
     wire [WIDTH-1:0] u_frac;
-    wire [WIDTH-1:0] s_dot_h
+    wire [WIDTH-1:0] s_dot_h;
 
     vectorDotProduct sDotH (
         s1,s2,s3,
@@ -201,82 +201,10 @@ module rayTriIntersect #(parameter WIDTH=32) (
         t_frac
     );
 
-    wire [(WIDTH + WIDTH) - 1:0] one_point_0 = {{{WIDTH-1}1'b0},1'b1,{{WIDTH}1'b0}}
-    assign valid = ~((a == 0) | (u_int != 0) | (u_frac == 0) | ({v_int != 0 | v_frac == 0) | ({u_int,u_frac} + {v_int,v_frac} > one_point_0) | {t_int,t_frac} > 0);
-
+    wire [(WIDTH + WIDTH) - 1:0] one_point_0 = ({(WIDTH + WIDTH){1'b0}} + 1'b1) << WIDTH;
+    assign valid = ~((a == 0) | (u_int != 0) | (u_frac == 0) | (v_int != 0 | v_frac == 0) | ({u_int,u_frac} + {v_int,v_frac} > one_point_0) | {t_int,t_frac} > 0);
     
     
-
-endmodule
-
-/* 
-    implement goldschmidt division
-    https://lauri.võsandi.com/hdl/arithmetic/goldschmidt-division-algorithm.html
-    https://projectf.io/posts/fixed-point-numbers-in-verilog/
-    floor style rounding
-*/
-module divideND #(
-    // integer bits
-    parameter WIDTH=32, 
-    // number of iterations, probably going to hardcode 4 for now
-    // but might come back and loopify it
-    parameter ITERS=4
-) (
-    n,d,q,f
-);  
-
-    input [WIDTH-1:0] n,d;
-    output [WIDTH-1:0] q,f;
-
-    // intermediate calculations represented in QWIDTH.WIDTH fixed point
-
-    wire [(WIDTH + WIDTH) - 1:0] one_point_0 = {{{WIDTH-1}1'b0},1'b1,{{WIDTH}1'b0}}
-
-
-    // pad d and d with extra intermediate fractional bits
-    wire [(WIDTH + WIDTH) - 1:0] N_initial = {n,{{WIDTH}1'b0}};
-    wire [(WIDTH + WIDTH) - 1:0] D_initial = {d,{{WIDTH}1'b0}};
-
-    // F_-1 = (D_initial >> (WIDTH-1))
-    wire [(WIDTH + WIDTH) - 1:0] F_initial = D_initial >> (WIDTH - 1);
     
-    
-    wire [(WIDTH + WIDTH) - 1:0] D_array [0:ITERS];
-    wire [((WIDTH + WIDTH) * 2) - 1:0] D_array_double [0:ITERS];
 
-    wire [(WIDTH + WIDTH) - 1:0] N_array [0:ITERS];
-    wire [((WIDTH + WIDTH) * 2) - 1:0] N_array_double [0:ITERS];
-
-    wire [(WIDTH + WIDTH) - 1:0] F_array [0:ITERS];
-    wire [((WIDTH + WIDTH) * 2) - 1:0] F_array_double [0:ITERS];
-
-    assign N_array_double[0] = F_initial * N_initial;
-    assign N_array[0] = N_array_double[0][(3 * WIDTH) - 1 : WIDTH];
-
-    assign D_array_double[0] = F_initial * D_initial;
-    assign D_array[0] = D_array_double[0][(3 * WIDTH) - 1 : WIDTH];
- 
-    assign F_array[0] = (one_point_0 << 1) - D_array[1];
-
-
-    integer i;
-    // main algorithm loop
-    for (i = 0; i < ITER; i = i + 1) begin
-        assign N_array_double[i + 1] = F_array[i] * N_array[i];
-        assign N_array[i + 1] = N_array_double[i + 1][(3 * WIDTH) - 1 : WIDTH];
-
-        assign D_array_double[i + 1] = F_array[i] * D_array[i];
-        assign D_array[i + 1] = D_array_double[i + 1][(3 * WIDTH) - 1 : WIDTH];
-
-        assign F_array[i + 1] = (one_point_0 << 1) - D_array[i + 1];
-    end
-
-    
-    // take the integer part of the calculation
-    assign q = N_array[ITER][(WITH * 2) - 1 : WIDTH];
-    assign f = N_array[ITER][WIDTH - 1 : 0];
-
-
-
-    
 endmodule
