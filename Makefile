@@ -3,8 +3,9 @@
 divide: divND_tb.v divideND.v
 	iverilog -o divide divND_tb.v divideND.v
 	
-	
-
+onePtX: divideND.v makeOnePtX_tb.v
+	iverilog -o makeOnePtX divideND.v makeOnePtX_tb.v
+	vvp makeOnePtX
 
 waves_div: divide
 	vvp divide

@@ -91,6 +91,38 @@ module power #(
     assign y = sums[POWER];
     
 endmodule
+
+module makeOnePtX #(
+    parameter WIDTH=32
+) (
+    d,e,w
+);
+    input [WIDTH-1:0] d; // input integer to be shifted
+    output [WIDTH:0] e; // d shifted to 1.xxx  in Q1.W
+    output [WIDTH-1:0] w; // amount shifted to normalize so we can shift back later
+
+    wire [(WIDTH + WIDTH) - 1:0] d_double = {d,{(WIDTH){1'b0}}};
+
+
+    wire [WIDTH:0] e_temp [0:WIDTH];
+    assign e_temp[0] = {(WIDTH+1){1'b0}};
+    wire w_found [0:WIDTH];
+    assign w_found[0] = 1'b0;
+
+    wire [WIDTH-1:0] w_temp [0:WIDTH];
+    assign w_temp[0] = {(WIDTH){1'b0}};
+
+    genvar i; 
+    for (i = 0; i < WIDTH-1; i=i+1) begin
+        assign w_temp[i+1] = w_found[i] ? w_temp[i] : i;
+        assign e_temp[i+1] = w_found[i] ? e_temp[i] : d_double >> i;
+        assign w_found[i+1] = w_found[i] ? w_found[i] : d[i] & (~|d[WIDTH-1:(i+1)]);
+    end
+
+    assign e = w_found[WIDTH-1] ? e_temp[WIDTH-1] : d_double >> (WIDTH-1);
+    assign w = w_found[WIDTH-1] ? w_temp[WIDTH-1] : WIDTH-1;
+   
+endmodule
     
 /* 
     implementing a reciprocal module for 0 < a < 1
@@ -99,22 +131,23 @@ endmodule
     r is the integer component of the calculation
 */
 
-module reciprocal #(
+/* module reciprocal #(
     parameter WIDTH=32,
     parameter ITERS=8
 ) (
-    a,r
+    d,r_int,r_frac
 );
 
-    input [WIDTH-1:0] a;  // a is in Q0.W notation
-    output [WIDTH-1:0] r; // r is in QW.0 notation
+    input [WIDTH-1:0] d;  // a is in QW.W notation
+    output [WIDTH-1:0] r; // r is in QW.W notation
    
-    // Qw.W
+    // QW.W
     wire [(WIDTH + WIDTH) - 1:0] one_point_0 = ({(WIDTH + WIDTH){1'b0}} + 1'b1) << WIDTH;
-    wire [(WIDTH + WIDTH) - 1:0] a_double = {{WIDTH{1'b0}},a};
+    wire [(WIDTH + WIDTH) - 1:0] e; //e is d shifted to be 0 < e < 2, in the form of 1.xxx
+
 
     // QW.W
-    wire [(WIDTH + WIDTH) - 1:0] minus_1 = a - one_point_0;
+    wire [(WIDTH + WIDTH) - 1:0] minus_1 = e - one_point_0;
     wire [(WIDTH + WIDTH) - 1:0] sums_double [0:ITERS];
 
     wire [WIDTH-1:0] sums [0:ITERS];
@@ -133,4 +166,4 @@ module reciprocal #(
 
     assign r = 1 - finals[ITERS];
     
-endmodule
+endmodule */
